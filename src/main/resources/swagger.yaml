@@ -1,0 +1,179 @@
+openapi: 3.0.4
+info:
+  title: Swagger Users - OpenAPI 3.0
+  description: |-
+    This is the demo core Swagger OpenApi implementation
+  version: 1.0.0
+#externalDocs:
+#  description: Find out more about Swagger
+#  url: http://swagger.io
+servers:
+  - url: http://localhost:8080
+tags:
+  - name: users
+    description: Operations about user
+paths:
+  /users:
+    post:
+      tags:
+        - users
+      summary: Create user
+      description: Create a user.
+      operationId: createUser
+      requestBody:
+        description: Created user object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+    get:
+      tags:
+        - users
+      summary: Get all users.
+      description: ''
+      operationId: getAllUsers
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserResponse'
+  /users/{id}:
+    get:
+      tags:
+        - users
+      summary: Get user by id
+      description: ''
+      operationId: getUserById
+      parameters:
+        - name: id
+          in: path
+          description: 'id of user '
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '404':
+          description: User not found
+    put:
+      tags:
+        - users
+      summary: Update user
+      operationId: updateUser
+      parameters:
+        - name: id
+          in: path
+          description: id that need to be deleted
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Update an existent user
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '404':
+          description: User not found
+    delete:
+      tags:
+        - users
+      summary: Delete user
+      operationId: deleteUser
+      parameters:
+        - name: id
+          in: path
+          description: Id that needs to be deleted
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: user deleted
+        '404':
+          description: User not found
+components:
+  schemas:
+    UserRequest:
+      type: object
+      required:
+        - username
+        - name
+      properties:
+        username:
+          type: string
+          example: theUser
+        name:
+          type: string
+          example: John
+          minLength: 3
+          maxLength: 20
+        lastName:
+          type: string
+          example: James
+        email:
+          type: string
+          example: john@email.com
+        password:
+          type: string
+          example: '12345'
+        status:
+          $ref: '#/components/schemas/UserStatus'
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          example: f0822b54-0720-11ee-be56-0242ac120002
+        username:
+          type: string
+          example: theUser
+        name:
+          type: string
+          example: John
+        lastName:
+          type: string
+          example: James
+        email:
+          type: string
+          example: john@email.com
+        password:
+          type: string
+          example: '12345'
+        status:
+          $ref: '#/components/schemas/UserStatus'
+        createdAt:
+          type: string
+          description: create date
+          format: date-time
+    UserStatus:
+      type: string
+      description: User Status
+      enum: [ ACTIVE, INACTIVE ]
+      example: ACTIVE
