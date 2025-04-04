@@ -8,6 +8,7 @@ import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -18,7 +19,8 @@ public class UsersService {
 
     public UserResponse createUser(UserRequest userRequest) {
         UserResponse user = null;
-        if(userDoesNotExists(userRequest.getUsername(), userRequest.getEmail())){
+        if(Objects.nonNull(userRequest) &&
+                otherEqualUserDoesNotExists(null, userRequest.getUsername(), userRequest.getEmail())){
             user = getUserResponse(userRequest);
             usersMap.put(user.getId(),user);
         }
@@ -42,7 +44,8 @@ public class UsersService {
         var user = usersMap.get(id);
         UserResponse updatedUser = null;
         if(user != null){
-            if(userDoesNotExists(userRequest.getUsername(), userRequest.getEmail())){
+            if(Objects.nonNull(userRequest) &&
+                    otherEqualUserDoesNotExists(id, userRequest.getUsername(), userRequest.getEmail())){
                 updatedUser = getUserResponse(id, user.getCreatedAt(), OffsetDateTime.now(), userRequest);
                 usersMap.put(id, updatedUser);
             }else{
@@ -69,9 +72,9 @@ public class UsersService {
         return this.getUserResponse(UUID.randomUUID().toString(), OffsetDateTime.now(), null, userRequest);
     }
 
-    private boolean userDoesNotExists(String username, String email) {
-        return usersMap.values().stream().noneMatch(u -> u.getUsername().equals(username)) &&
-                usersMap.values().stream().noneMatch(u -> u.getEmail().equals(email));
+    private boolean otherEqualUserDoesNotExists(String id, String username, String email) {
+        return usersMap.values().stream().filter(u -> !Objects.equals(u.getId(), id)).noneMatch(u -> u.getUsername().equals(username)) &&
+                usersMap.values().stream().filter(u -> !Objects.equals(u.getId(), id)).noneMatch(u -> u.getEmail().equals(email));
 
     }
 }
