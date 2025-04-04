@@ -30,12 +30,14 @@ paths:
             schema:
               $ref: '#/components/schemas/UserRequest'
       responses:
-        200:
+        '200':
           description: successful operation
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserResponse'
+        '409':
+          description: A user with this username and/or email already exists
     get:
       tags:
         - users
@@ -101,6 +103,8 @@ paths:
                 $ref: '#/components/schemas/UserResponse'
         '404':
           description: User not found
+        '409':
+          description: A user with this username and/or email already exists
     delete:
       tags:
         - users
@@ -171,6 +175,10 @@ components:
         createdAt:
           type: string
           description: create date
+          format: date-time
+        updatedAt:
+          type: string
+          description: update date
           format: date-time
     UserStatus:
       type: string
