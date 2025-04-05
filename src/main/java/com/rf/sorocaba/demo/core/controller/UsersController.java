@@ -15,8 +15,6 @@ import java.util.Objects;
 @RestController
 public class UsersController implements UsersApi {
 
-    private static final String ALREADY_EXIST = "A user with this username and/or email already exists";
-
     private final UsersService usersService;
 
     @Autowired
@@ -25,11 +23,11 @@ public class UsersController implements UsersApi {
     }
 
     @Override
-    public ResponseEntity createUser(UserRequest userRequest) {
+    public ResponseEntity<UserResponse> createUser(UserRequest userRequest) {
         UserResponse newUser = usersService.createUser(userRequest);
-        return Objects.nonNull(newUser) ? ResponseEntity.ok(newUser) :
-                ResponseEntity.status(HttpStatus.CONFLICT)
-                        .body(ALREADY_EXIST);
+        return Objects.nonNull(newUser) ?
+                ResponseEntity.ok(newUser) :
+                ResponseEntity.status(HttpStatus.CONFLICT).build();
     }
 
     @Override
@@ -51,17 +49,16 @@ public class UsersController implements UsersApi {
     }
 
     @Override
-    public ResponseEntity updateUser(String id, UserRequest userRequest) {
+    public ResponseEntity<UserResponse> updateUser(String id, UserRequest userRequest) {
 
         UserResponse updatedUser = usersService.updateUser(id, userRequest);
-        ResponseEntity response = ResponseEntity.notFound().build();
+        ResponseEntity<UserResponse> response = ResponseEntity.notFound().build();
 
         if(Objects.nonNull(updatedUser)){
             if(Objects.nonNull(updatedUser.getId()) && updatedUser.getId().equals(id)){
                 response = ResponseEntity.ok(updatedUser);
             }else{
-                response = ResponseEntity.status(HttpStatus.CONFLICT)
-                        .body(ALREADY_EXIST);
+                response = ResponseEntity.status(HttpStatus.CONFLICT).build();
             }
         }
         return response;

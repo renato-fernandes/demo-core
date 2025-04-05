@@ -55,6 +55,10 @@ public class UsersService {
         return updatedUser;
     }
 
+    private UserResponse getUserResponse(UserRequest userRequest) {
+        return this.getUserResponse(UUID.randomUUID().toString(), OffsetDateTime.now(), null, userRequest);
+    }
+
     private UserResponse getUserResponse(String id, OffsetDateTime createDate, OffsetDateTime updateDate, UserRequest userRequest) {
         return new UserResponse()
                 .id(id)
@@ -66,10 +70,6 @@ public class UsersService {
                 .password(userRequest.getPassword())
                 .createdAt(createDate)
                 .updatedAt(updateDate);
-    }
-
-    private UserResponse getUserResponse(UserRequest userRequest) {
-        return this.getUserResponse(UUID.randomUUID().toString(), OffsetDateTime.now(), null, userRequest);
     }
 
     private boolean otherEqualUserDoesNotExists(String id, String username, String email) {

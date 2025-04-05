@@ -1,9 +1,11 @@
 package com.rf.sorocaba.demo.core.service;
 
+import com.rf.sorocaba.demo.core.UserTest;
 import com.rf.sorocaba.demo.core.model.UserRequest;
 import com.rf.sorocaba.demo.core.model.UserResponse;
-import com.rf.sorocaba.demo.core.model.UserStatus;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.List;
@@ -15,28 +17,22 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
-public class UsersServiceTest {
+public class UsersServiceTest extends UserTest {
 
-    private static final String TEST_NAME = "Name";
-    private static final String TEST_USERNAME = "username_test";
-    private static final String TEST_LASTNAME = "Test";
-    private static final String TEST_EMAIL = "test@email.com";
-    private static final String TEST_PASSWORD = "123";
-    private static final String TEST_STATUS = "ACTIVE";
+    @InjectMocks
+    private UsersService usersService;
 
-    private static final String TEST_NAME_2 = "Another";
-    private static final String TEST_USERNAME_2 = "another_username_test";
-    private static final String TEST_LASTNAME_2 = "TestName";
-    private static final String TEST_EMAIL_2 = "another.test@email.com";
-    private static final String TEST_PASSWORD_2 = "456";
-    private static final String TEST_STATUS_2 = "INACTIVE";
+    private UserRequest sampleUserRequest;
 
-    private final UserRequest sampleUserRequest = getSampleUserRequest();
+    @BeforeEach
+    public void setup(){
+        sampleUserRequest = getSampleUserRequest();
+    }
 
     @Test
     public void createUserTest(){
 
-        UserResponse result = getUsersService().createUser(sampleUserRequest);
+        UserResponse result = usersService.createUser(sampleUserRequest);
 
         assertNotNull(result);
         assertNotNull(result.getId());
@@ -53,7 +49,7 @@ public class UsersServiceTest {
     @Test
     public void createEmptyUserTest(){
 
-        UserResponse result = getUsersService().createUser(new UserRequest());
+        UserResponse result = usersService.createUser(new UserRequest());
 
         assertNotNull(result);
         assertNotNull(result.getId());
@@ -70,7 +66,7 @@ public class UsersServiceTest {
     @Test
     public void createNullUserTest(){
 
-        UserResponse result = getUsersService().createUser(null);
+        UserResponse result = usersService.createUser(null);
 
         assertNull(result);
     }
@@ -78,7 +74,7 @@ public class UsersServiceTest {
     @Test
     public void createExistingUserTest(){
 
-        UsersService usersService = getUsersService();
+//        UsersService usersService = usersService;
 
         usersService.createUser(sampleUserRequest);
         UserResponse result = usersService.createUser(sampleUserRequest);
@@ -88,8 +84,6 @@ public class UsersServiceTest {
 
     @Test
     public void createExistingUserNameTest(){
-
-        UsersService usersService = getUsersService();
 
         usersService.createUser(sampleUserRequest);
         UserResponse result = usersService.createUser(new UserRequest()
@@ -102,8 +96,6 @@ public class UsersServiceTest {
     @Test
     public void createExistingUserEmailTest(){
 
-        UsersService usersService = getUsersService();
-
         usersService.createUser(sampleUserRequest);
         UserResponse result = usersService.createUser(new UserRequest()
                 .username("New")
@@ -114,8 +106,6 @@ public class UsersServiceTest {
 
     @Test
     public void deleteUserTest(){
-
-        UsersService usersService = getUsersService();
 
         UserResponse userToBeDeleted = usersService.createUser(sampleUserRequest);
 
@@ -128,8 +118,6 @@ public class UsersServiceTest {
     @Test
     public void deleteNonExistingUserTest(){
 
-        UsersService usersService = getUsersService();
-
         UserResponse result = usersService.deleteUser("test-id");
 
         assertNull(result);
@@ -137,8 +125,6 @@ public class UsersServiceTest {
 
     @Test
     public void getAllUsersTest(){
-
-        UsersService usersService = getUsersService();
 
         usersService.createUser(sampleUserRequest);
         usersService.createUser(getUserRequest(TEST_NAME_2, TEST_USERNAME_2, TEST_LASTNAME_2,
@@ -154,8 +140,6 @@ public class UsersServiceTest {
     @Test
     public void getAllUniqueUsersTest(){
 
-        UsersService usersService = getUsersService();
-
         usersService.createUser(sampleUserRequest);
         usersService.createUser(sampleUserRequest);
 
@@ -169,8 +153,6 @@ public class UsersServiceTest {
     @Test
     public void getEmptyAllUsersTest(){
 
-        UsersService usersService = getUsersService();
-
         List<UserResponse> resultList = usersService.getAllUsers();
 
         assertNotNull(resultList);
@@ -179,8 +161,6 @@ public class UsersServiceTest {
 
     @Test
     public void getUserByIdTest(){
-
-        UsersService usersService = getUsersService();
 
         UserResponse userResponse = usersService.createUser(sampleUserRequest);
         usersService.createUser(getUserRequest(TEST_NAME_2, TEST_USERNAME_2, TEST_LASTNAME_2,
@@ -195,8 +175,6 @@ public class UsersServiceTest {
     @Test
     public void getUserByNonExistingIdTest(){
 
-        UsersService usersService = getUsersService();
-
         UserResponse result = usersService.getUserById("test-id");
 
         assertNull(result);
@@ -205,8 +183,6 @@ public class UsersServiceTest {
     @Test
     public void getUserByNullIdTest(){
 
-        UsersService usersService = getUsersService();
-
         UserResponse result = usersService.getUserById(null);
 
         assertNull(result);
@@ -214,8 +190,6 @@ public class UsersServiceTest {
 
     @Test
     public void updateUserTest(){
-
-        UsersService usersService = getUsersService();
 
         UserResponse userToBeUpdated = usersService.createUser(sampleUserRequest);
         UserResponse result =  usersService.updateUser(userToBeUpdated.getId(),
@@ -237,8 +211,6 @@ public class UsersServiceTest {
     @Test
     public void updateNonExistingUserTest(){
 
-        UsersService usersService = getUsersService();
-
         UserResponse result =  usersService.updateUser("test-id" ,sampleUserRequest);
 
         assertNull(result);
@@ -246,8 +218,6 @@ public class UsersServiceTest {
 
     @Test
     public void updateExistingUserNameTest(){
-
-        UsersService usersService = getUsersService();
 
         UserResponse userToBeUpdated = usersService.createUser(sampleUserRequest);
         usersService.createUser(getUserRequest(TEST_NAME_2, TEST_USERNAME_2, TEST_LASTNAME_2,
@@ -265,8 +235,6 @@ public class UsersServiceTest {
     @Test
     public void updateExistingUserEmailTest(){
 
-        UsersService usersService = getUsersService();
-
         UserResponse userToBeUpdated = usersService.createUser(sampleUserRequest);
         usersService.createUser(getUserRequest(TEST_NAME_2, TEST_USERNAME_2, TEST_LASTNAME_2,
                 TEST_EMAIL_2, TEST_PASSWORD_2, TEST_STATUS_2));
@@ -283,37 +251,11 @@ public class UsersServiceTest {
     @Test
     public void updateUserNullTest(){
 
-        UsersService usersService = getUsersService();
-
         UserResponse userToBeUpdated = usersService.createUser(sampleUserRequest);
 
         UserResponse result = usersService.updateUser(userToBeUpdated.getId(), null);
 
         assertNotNull(result);
         assertNull(result.getId());
-    }
-
-
-
-
-
-    private UsersService getUsersService(){
-        return new UsersService();
-    }
-
-    private UserRequest getSampleUserRequest(){
-        return getUserRequest(TEST_NAME, TEST_USERNAME, TEST_LASTNAME,
-                TEST_EMAIL, TEST_PASSWORD, TEST_STATUS);
-    }
-
-    private UserRequest getUserRequest(String name, String username, String lastName,
-                                       String email, String password, String status){
-        return new UserRequest()
-                .name(name)
-                .username(username)
-                .lastName(lastName)
-                .email(email)
-                .password(password)
-                .status(UserStatus.valueOf(status));
     }
 }
