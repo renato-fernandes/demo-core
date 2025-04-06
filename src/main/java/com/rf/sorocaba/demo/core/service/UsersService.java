@@ -5,24 +5,18 @@ import com.rf.sorocaba.demo.core.model.UserRequest;
 import com.rf.sorocaba.demo.core.model.UserResponse;
 import com.rf.sorocaba.demo.core.model.UserStatus;
 import com.rf.sorocaba.demo.core.repository.UsersRepository;
-import org.hibernate.PropertyValueException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
 @Service
 public class UsersService {
-
-    //TODO: remove this after implement database integration
-    private final Map<String, UserResponse> usersMap = new HashMap<>();
 
     private final UsersRepository usersRepository;
 
