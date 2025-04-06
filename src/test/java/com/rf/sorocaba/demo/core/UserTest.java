@@ -1,7 +1,12 @@
 package com.rf.sorocaba.demo.core;
 
+import com.rf.sorocaba.demo.core.entity.Users;
 import com.rf.sorocaba.demo.core.model.UserRequest;
 import com.rf.sorocaba.demo.core.model.UserStatus;
+
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class UserTest {
 
@@ -33,6 +38,38 @@ public abstract class UserTest {
                 .email(email)
                 .password(password)
                 .status(UserStatus.valueOf(status));
+    }
+
+    protected Users getUsers(Long id){
+        Users users = new Users();
+        users.setId(id);
+        users.setUsername(TEST_USERNAME);
+        users.setEmail(TEST_EMAIL);
+        users.setName(TEST_NAME);
+        users.setLastName(TEST_LASTNAME);
+        users.setPassword(TEST_PASSWORD);
+        users.setStatus(true);
+        users.setCreatedAt(Instant.now());
+        return users;
+    }
+
+    protected List<Users> getUsersList(){
+        List<Users> usersList = new ArrayList<>();
+        Users users = new Users();
+        users.setId(2L);
+        users.setUsername(TEST_USERNAME_2);
+        users.setEmail(TEST_EMAIL_2);
+        users.setName(TEST_NAME_2);
+        users.setLastName(TEST_LASTNAME_2);
+        users.setPassword(TEST_PASSWORD_2);
+        users.setStatus(false);
+        users.setCreatedAt(Instant.now());
+        users.setUpdatedAt(Instant.now());
+
+        usersList.add(getUsers(1L));
+        usersList.add(users);
+
+        return usersList;
     }
 
 }

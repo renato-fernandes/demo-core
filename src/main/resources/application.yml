@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: @project.name@
+  datasource:
+    url: jdbc:postgresql://localhost:5432/demo-core-db
+    driver-class-name: org.postgresql.Driver
+    username: postgres
+    password: 123
+  sql:
+    init:
+      mode: always
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    open-in-view: false
