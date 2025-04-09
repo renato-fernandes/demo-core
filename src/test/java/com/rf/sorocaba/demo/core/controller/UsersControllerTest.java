@@ -21,15 +21,17 @@ import org.springframework.test.web.servlet.ResultActions;
 import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = UsersController.class)
@@ -46,6 +48,8 @@ public class UsersControllerTest extends UserTest {
     @MockitoBean
     private UsersService usersService;
 
+    private static final String ID = "123";
+
     private UserRequest userRequest;
     private UserResponse userResponse;
 
@@ -53,7 +57,7 @@ public class UsersControllerTest extends UserTest {
     public void setup(){
         userRequest = getSampleUserRequest();
         userResponse = new UserResponse()
-                .id(UUID.randomUUID().toString())
+                .id(ID)
                 .name(TEST_NAME)
                 .username(TEST_USERNAME)
                 .lastName(TEST_LASTNAME)
@@ -68,12 +72,16 @@ public class UsersControllerTest extends UserTest {
 
         when(usersService.createUser(any())).thenReturn(userResponse);
 
-        ResultActions response = mockMvc.perform(post("/users")
+        mockMvc.perform(post("/users")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(userRequest)));
+                .content(objectMapper.writeValueAsString(userRequest)))
+                .andExpect(status().isOk())
+                .andExpect(content().json(objectMapper.writeValueAsString(userResponse)))
+                .andExpect(jsonPath("$.id").value(ID))
+                .andExpect(jsonPath("$.username").value(TEST_USERNAME))
+                .andExpect(jsonPath("$.status").value("ACTIVE"));
 
-        response.andExpect(status().isOk());
-        response.andExpect(content().json(objectMapper.writeValueAsString(userResponse)));
+        verify(usersService, times(1)).createUser(userRequest);
     }
 
     @Test
@@ -81,11 +89,12 @@ public class UsersControllerTest extends UserTest {
 
         when(usersService.createUser(any())).thenReturn(null);
 
-        ResultActions response = mockMvc.perform(post("/users")
+        mockMvc.perform(post("/users")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(userRequest)));
+                .content(objectMapper.writeValueAsString(userRequest)))
+                .andExpect(status().isConflict());
 
-        response.andExpect(status().isConflict());
+        verify(usersService, times(1)).createUser(userRequest);
     }
 
     @Test
@@ -93,9 +102,10 @@ public class UsersControllerTest extends UserTest {
 
         when(usersService.deleteUser(any())).thenReturn(userResponse);
 
-        ResultActions response = mockMvc.perform(delete("/users/{id}", userResponse.getId()));
+        mockMvc.perform(delete("/users/{id}", userResponse.getId()))
+                .andExpect(status().isOk());
 
-        response.andExpect(status().isOk());
+        verify(usersService, times(1)).deleteUser(userResponse.getId());
     }
 
     @Test
@@ -103,9 +113,10 @@ public class UsersControllerTest extends UserTest {
 
         when(usersService.deleteUser(any())).thenReturn(null);
 
-        ResultActions response = mockMvc.perform(delete("/users/{id}", "123"));
+        mockMvc.perform(delete("/users/{id}", ID))
+                .andExpect(status().isNotFound());
 
-        response.andExpect(status().isNotFound());
+        verify(usersService, times(1)).deleteUser(ID);
     }
 
     @Test
@@ -114,10 +125,11 @@ public class UsersControllerTest extends UserTest {
         List<UserResponse> result = Collections.singletonList(userResponse);
         when(usersService.getAllUsers()).thenReturn(result);
 
-        ResultActions response = mockMvc.perform(get("/users"));
+        mockMvc.perform(get("/users"))
+                .andExpect(status().isOk())
+                .andExpect(content().json(objectMapper.writeValueAsString(result)));
 
-        response.andExpect(status().isOk());
-        response.andExpect(content().json(objectMapper.writeValueAsString(result)));
+        verify(usersService, times(1)).getAllUsers();
     }
 
     @Test
@@ -125,9 +137,10 @@ public class UsersControllerTest extends UserTest {
 
         when(usersService.getAllUsers()).thenReturn(null);
 
-        ResultActions response = mockMvc.perform(get("/users"));
+        mockMvc.perform(get("/users"))
+                .andExpect(status().isNotFound());
 
-        response.andExpect(status().isNotFound());
+        verify(usersService, times(1)).getAllUsers();
     }
 
     @Test
@@ -135,9 +148,14 @@ public class UsersControllerTest extends UserTest {
 
         when(usersService.getUserById(any())).thenReturn(userResponse);
 
-        ResultActions response = mockMvc.perform(get("/users/{id}", userResponse.getId()));
+        mockMvc.perform(get("/users/{id}", userResponse.getId()))
+                .andExpect(status().isOk())
+                .andExpect(content().json(objectMapper.writeValueAsString(userResponse)))
+                .andExpect(jsonPath("$.id").value(ID))
+                .andExpect(jsonPath("$.username").value(TEST_USERNAME))
+                .andExpect(jsonPath("$.status").value("ACTIVE"));
 
-        response.andExpect(status().isOk());
+        verify(usersService, times(1)).getUserById(userResponse.getId());
     }
 
     @Test
@@ -145,9 +163,10 @@ public class UsersControllerTest extends UserTest {
 
         when(usersService.getUserById(any())).thenReturn(null);
 
-        ResultActions response = mockMvc.perform(get("/users/{id}", "123"));
+        mockMvc.perform(get("/users/{id}", ID))
+                .andExpect(status().isNotFound());
 
-        response.andExpect(status().isNotFound());
+        verify(usersService, times(1)).getUserById(userResponse.getId());
     }
 
     @Test
@@ -155,12 +174,16 @@ public class UsersControllerTest extends UserTest {
 
         when(usersService.updateUser(any(), any())).thenReturn(userResponse);
 
-        ResultActions response = mockMvc.perform(put("/users/{id}", userResponse.getId())
+        mockMvc.perform(put("/users/{id}", userResponse.getId())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(userRequest)));
+                .content(objectMapper.writeValueAsString(userRequest)))
+                .andExpect(status().isOk())
+                .andExpect(content().json(objectMapper.writeValueAsString(userResponse)))
+                .andExpect(jsonPath("$.id").value(ID))
+                .andExpect(jsonPath("$.username").value(TEST_USERNAME))
+                .andExpect(jsonPath("$.status").value("ACTIVE"));
 
-        response.andExpect(status().isOk());
-        response.andExpect(content().json(objectMapper.writeValueAsString(userResponse)));
+        verify(usersService, times(1)).updateUser(userResponse.getId(), userRequest);
     }
 
     @Test
@@ -168,24 +191,23 @@ public class UsersControllerTest extends UserTest {
 
         when(usersService.updateUser(any(), any())).thenReturn(userResponse);
 
-        ResultActions response = mockMvc.perform(put("/users/{id}", "123")
+        mockMvc.perform(put("/users/{id}", "321")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(userRequest)));
+                .content(objectMapper.writeValueAsString(userRequest))).andExpect(status().isConflict());
 
-        response.andExpect(status().isConflict());
+        verify(usersService, times(1)).updateUser("321", userRequest);
     }
 
     @Test
     public void updateUserWithNullIdTest() throws Exception {
 
-
         when(usersService.updateUser(any(), any())).thenReturn(new UserResponse());
 
-        ResultActions response = mockMvc.perform(put("/users/{id}", "123")
+        mockMvc.perform(put("/users/{id}", ID)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(userRequest)));
+                .content(objectMapper.writeValueAsString(userRequest))).andExpect(status().isConflict());
 
-        response.andExpect(status().isConflict());
+        verify(usersService, times(1)).updateUser(ID, userRequest);
     }
 
     @Test
@@ -193,11 +215,11 @@ public class UsersControllerTest extends UserTest {
 
         when(usersService.updateUser(any(), any())).thenReturn(null);
 
-        ResultActions response = mockMvc.perform(put("/users/{id}", "123")
+        mockMvc.perform(put("/users/{id}", "123")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(userRequest)));
+                .content(objectMapper.writeValueAsString(userRequest))).andExpect(status().isNotFound());
 
-        response.andExpect(status().isNotFound());
+        verify(usersService, times(1)).updateUser(ID, userRequest);
     }
 
 }
