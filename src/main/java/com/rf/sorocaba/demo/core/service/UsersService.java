@@ -1,16 +1,14 @@
 package com.rf.sorocaba.demo.core.service;
 
 import com.rf.sorocaba.demo.core.entity.Users;
+import com.rf.sorocaba.demo.core.mapper.UserMapper;
 import com.rf.sorocaba.demo.core.model.UserRequest;
 import com.rf.sorocaba.demo.core.model.UserResponse;
-import com.rf.sorocaba.demo.core.model.UserStatus;
 import com.rf.sorocaba.demo.core.repository.UsersRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -29,14 +27,7 @@ public class UsersService {
         UserResponse user = null;
         if(Objects.nonNull(userRequest) && otherEqualUserDoesNotExists(userRequest)){
 
-            Users users = new Users();
-            users.setUsername(userRequest.getUsername());
-            users.setEmail(userRequest.getEmail());
-            users.setName(userRequest.getName());
-            users.setLastName(userRequest.getLastName());
-            users.setPassword(userRequest.getPassword());
-            users.setStatus(UserStatus.ACTIVE.equals(userRequest.getStatus()));
-            users.setCreatedAt(Instant.now());
+            Users users = UserMapper.toEntity(userRequest);
 
             Users newUsers = null;
             try {
@@ -46,15 +37,7 @@ public class UsersService {
                 return null;
             }
 
-            user = new UserResponse()
-                    .id(String.valueOf(newUsers.getId()))
-                    .username(newUsers.getUsername())
-                    .name(newUsers.getName())
-                    .lastName(newUsers.getLastName())
-                    .email(newUsers.getEmail())
-                    .password(newUsers.getPassword())
-                    .status(newUsers.getStatus() ? UserStatus.ACTIVE : UserStatus.INACTIVE)
-                    .createdAt(newUsers.getCreatedAt().atOffset(ZoneOffset.UTC));
+            user = UserMapper.toResponse(newUsers);
         }
         return user;
     }
@@ -69,18 +52,7 @@ public class UsersService {
         List<Users> usersList = usersRepository.findAll();
 
         return usersList.stream()
-                .map(users -> new UserResponse()
-                        .id(users.getId().toString())
-                        .username(users.getUsername())
-                        .email(users.getEmail())
-                        .name(users.getName())
-                        .lastName(users.getLastName())
-                        .password(users.getPassword())
-                        .status(users.getStatus() ? UserStatus.ACTIVE : UserStatus.INACTIVE)
-                        .createdAt(users.getCreatedAt().atOffset(ZoneOffset.UTC))
-                        .updatedAt(Objects.nonNull(users.getUpdatedAt()) ?
-                                users.getUpdatedAt().atOffset(ZoneOffset.UTC) :
-                                null))
+                .map(UserMapper::toResponse)
                 .toList();
     }
 
@@ -93,19 +65,7 @@ public class UsersService {
         if(usersOptional.isPresent()){
             users =usersOptional.get();
         }
-        return Objects.nonNull(users) ? new UserResponse()
-                .id(users.getId().toString())
-                .username(users.getUsername())
-                .email(users.getEmail())
-                .name(users.getName())
-                .lastName(users.getLastName())
-                .password(users.getPassword())
-                .status(users.getStatus() ? UserStatus.ACTIVE : UserStatus.INACTIVE)
-                .createdAt(users.getCreatedAt().atOffset(ZoneOffset.UTC))
-                .updatedAt(Objects.nonNull(users.getUpdatedAt()) ?
-                        users.getUpdatedAt().atOffset(ZoneOffset.UTC) :
-                        null) :
-                null;
+        return Objects.nonNull(users) ? UserMapper.toResponse(users) : null;
     }
 
     public UserResponse updateUser(String id, UserRequest userRequest) {
@@ -116,29 +76,11 @@ public class UsersService {
         if(userToBeUpdated.isPresent()){
             if(Objects.nonNull(userRequest) && otherEqualUserDoesNotExists(Long.valueOf(id), userRequest)){
 
-                Users users = new Users();
-                users.setId(Long.valueOf(id));
-                users.setUsername(userRequest.getUsername());
-                users.setEmail(userRequest.getEmail());
-                users.setName(userRequest.getName());
-                users.setLastName(userRequest.getLastName());
-                users.setPassword(userRequest.getPassword());
-                users.setStatus(UserStatus.ACTIVE.equals(userRequest.getStatus()));
-                users.setCreatedAt(userToBeUpdated.get().getCreatedAt());
-                users.setUpdatedAt(Instant.now());
+                Users users = UserMapper.toEntity(userRequest);
 
                 Users updatedUserEntity = usersRepository.save(users);
 
-                updatedUser = new UserResponse()
-                        .id(String.valueOf(updatedUserEntity.getId()))
-                        .username(updatedUserEntity.getUsername())
-                        .name(updatedUserEntity.getName())
-                        .lastName(updatedUserEntity.getLastName())
-                        .email(updatedUserEntity.getEmail())
-                        .password(updatedUserEntity.getPassword())
-                        .status(updatedUserEntity.getStatus() ? UserStatus.ACTIVE : UserStatus.INACTIVE)
-                        .createdAt(updatedUserEntity.getCreatedAt().atOffset(ZoneOffset.UTC))
-                        .updatedAt(updatedUserEntity.getCreatedAt().atOffset(ZoneOffset.UTC));
+                updatedUser = UserMapper.toResponse(updatedUserEntity);
             }else{
                 updatedUser = new UserResponse();
             }

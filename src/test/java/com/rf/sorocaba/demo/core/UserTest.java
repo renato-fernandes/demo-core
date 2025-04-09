@@ -2,6 +2,7 @@ package com.rf.sorocaba.demo.core;
 
 import com.rf.sorocaba.demo.core.entity.Users;
 import com.rf.sorocaba.demo.core.model.UserRequest;
+import com.rf.sorocaba.demo.core.model.UserResponse;
 import com.rf.sorocaba.demo.core.model.UserStatus;
 
 import java.time.Instant;
@@ -51,6 +52,20 @@ public abstract class UserTest {
         users.setStatus(true);
         users.setCreatedAt(Instant.now());
         return users;
+    }
+
+    protected UserResponse getUserResponse(Long id){
+
+        UserResponse response = new UserResponse();
+
+        response.setId(id.toString());
+        response.setUsername(TEST_USERNAME);
+        response.setName(TEST_NAME);
+        response.setLastName(TEST_LASTNAME);
+        response.setEmail(TEST_EMAIL);
+        response.setPassword(TEST_PASSWORD);
+
+        return response;
     }
 
     protected List<Users> getUsersList(){

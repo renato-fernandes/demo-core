@@ -2,6 +2,7 @@ package com.rf.sorocaba.demo.core.service;
 
 import com.rf.sorocaba.demo.core.UserTest;
 import com.rf.sorocaba.demo.core.entity.Users;
+import com.rf.sorocaba.demo.core.mapper.UserMapper;
 import com.rf.sorocaba.demo.core.model.UserRequest;
 import com.rf.sorocaba.demo.core.model.UserResponse;
 import com.rf.sorocaba.demo.core.model.UserStatus;
@@ -10,10 +11,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,6 +32,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
@@ -53,50 +59,74 @@ public class UsersServiceTest extends UserTest {
     @Test
     public void createUserTest(){
 
-        when(usersRepository.findByUsername(anyString())).thenReturn(new ArrayList<>());
-        when(usersRepository.findByEmail(anyString())).thenReturn(new ArrayList<>());
-        when(usersRepository.save(any())).thenReturn(users);
+        UserResponse userResponseTest = getUserResponse(users.getId());
+        userResponseTest.status(UserStatus.ACTIVE);
+        userResponseTest.createdAt(OffsetDateTime.ofInstant(users.getCreatedAt(), ZoneOffset.UTC));
 
-        UserResponse result = usersService.createUser(sampleUserRequest);
+        try (MockedStatic<UserMapper> mockedMapper = mockStatic(UserMapper.class)) {
+            mockedMapper.when(() -> UserMapper.toEntity(any())).thenReturn(users);
+            when(usersRepository.findByUsername(anyString())).thenReturn(new ArrayList<>());
+            when(usersRepository.findByEmail(anyString())).thenReturn(new ArrayList<>());
+            when(usersRepository.save(any())).thenReturn(users);
+            mockedMapper.when(() -> UserMapper.toResponse(any())).thenReturn(userResponseTest);
 
-        assertNotNull(result);
-        assertNotNull(result.getId());
-        assertEquals(TEST_NAME, result.getName());
-        assertEquals(TEST_USERNAME, result.getUsername());
-        assertEquals(TEST_LASTNAME, result.getLastName());
-        assertEquals(TEST_EMAIL, result.getEmail());
-        assertEquals(TEST_PASSWORD, result.getPassword());
-        assertEquals(TEST_STATUS, result.getStatus().getValue());
-        assertNotNull(result.getCreatedAt());
-        assertNull(result.getUpdatedAt());
+            UserResponse result = usersService.createUser(sampleUserRequest);
+
+            assertNotNull(result);
+            assertNotNull(result.getId());
+            assertEquals(TEST_NAME, result.getName());
+            assertEquals(TEST_USERNAME, result.getUsername());
+            assertEquals(TEST_LASTNAME, result.getLastName());
+            assertEquals(TEST_EMAIL, result.getEmail());
+            assertEquals(TEST_PASSWORD, result.getPassword());
+            assertEquals(TEST_STATUS, result.getStatus().getValue());
+            assertNotNull(result.getCreatedAt());
+            assertNull(result.getUpdatedAt());
+
+            verify(usersRepository, times(1)).save(users);
+            mockedMapper.verify(() -> UserMapper.toEntity(sampleUserRequest), times(1));
+            mockedMapper.verify(() -> UserMapper.toResponse(users), times(1));
+        }
     }
 
     @Test
     public void createInactiveUserTest(){
 
-        Users users = getUsers(id);
-        users.setStatus(false);
+        UserResponse userResponseTest = getUserResponse(users.getId());
+        userResponseTest.status(UserStatus.INACTIVE);
+        userResponseTest.createdAt(OffsetDateTime.ofInstant(users.getCreatedAt(), ZoneOffset.UTC));
 
-        when(usersRepository.findByUsername(anyString())).thenReturn(new ArrayList<>());
-        when(usersRepository.findByEmail(anyString())).thenReturn(new ArrayList<>());
-        when(usersRepository.save(any())).thenReturn(users);
+        Users inactiveUserEntity = getUsers(id);
+        inactiveUserEntity.setStatus(false);
 
-        UserResponse result = usersService.createUser(sampleUserRequest);
+        try (MockedStatic<UserMapper> mockedMapper = mockStatic(UserMapper.class)) {
+            mockedMapper.when(() -> UserMapper.toEntity(any())).thenReturn(inactiveUserEntity);
+            when(usersRepository.findByUsername(anyString())).thenReturn(new ArrayList<>());
+            when(usersRepository.findByEmail(anyString())).thenReturn(new ArrayList<>());
+            when(usersRepository.save(any())).thenReturn(inactiveUserEntity);
+            mockedMapper.when(() -> UserMapper.toResponse(any())).thenReturn(userResponseTest);
 
-        assertNotNull(result);
-        assertEquals(UserStatus.INACTIVE, result.getStatus());
+            UserResponse result = usersService.createUser(sampleUserRequest);
+
+            assertNotNull(result);
+            assertEquals(UserStatus.INACTIVE, result.getStatus());
+        }
     }
 
     @Test
     public void createEmptyUserTest(){
 
-        when(usersRepository.findByUsername(anyString())).thenReturn(new ArrayList<>());
-        when(usersRepository.findByEmail(anyString())).thenReturn(new ArrayList<>());
-        when(usersRepository.save(any())).thenThrow(DataIntegrityViolationException.class);
+        try (MockedStatic<UserMapper> mockedMapper = mockStatic(UserMapper.class)) {
+            mockedMapper.when(() -> UserMapper.toEntity(any())).thenReturn(users);
+            when(usersRepository.findByUsername(anyString())).thenReturn(new ArrayList<>());
+            when(usersRepository.findByEmail(anyString())).thenReturn(new ArrayList<>());
+            when(usersRepository.save(any())).thenThrow(DataIntegrityViolationException.class);
 
-        UserResponse result = usersService.createUser(new UserRequest());
 
-        assertNull(result);
+            UserResponse result = usersService.createUser(new UserRequest());
+
+            assertNull(result);
+        }
     }
 
     @Test
@@ -166,13 +196,20 @@ public class UsersServiceTest extends UserTest {
     @Test
     public void getAllUsersTest(){
 
-        when(usersRepository.findAll()).thenReturn(getUsersList());
+        UserResponse userResponseTest = getUserResponse(users.getId());
+        userResponseTest.status(UserStatus.ACTIVE);
+        userResponseTest.createdAt(OffsetDateTime.ofInstant(users.getCreatedAt(), ZoneOffset.UTC));
 
-        List<UserResponse> resultList = usersService.getAllUsers();
+        try (MockedStatic<UserMapper> mockedMapper = mockStatic(UserMapper.class)) {
+            when(usersRepository.findAll()).thenReturn(getUsersList());
+            mockedMapper.when(() -> UserMapper.toResponse(any())).thenReturn(userResponseTest);
 
-        assertNotNull(resultList);
-        assertFalse(resultList.isEmpty());
-        assertEquals(2, resultList.size());
+            List<UserResponse> resultList = usersService.getAllUsers();
+
+            assertNotNull(resultList);
+            assertFalse(resultList.isEmpty());
+            assertEquals(2, resultList.size());
+        }
     }
 
     @Test
@@ -189,42 +226,56 @@ public class UsersServiceTest extends UserTest {
     @Test
     public void getUserByIdTest(){
 
-        when(usersRepository.findById(anyLong())).thenReturn(Optional.of(users));
+        UserResponse userResponseTest = getUserResponse(users.getId());
+        userResponseTest.status(UserStatus.ACTIVE);
+        userResponseTest.createdAt(OffsetDateTime.ofInstant(users.getCreatedAt(), ZoneOffset.UTC));
 
-        UserResponse result = usersService.getUserById(String.valueOf(id));
+        try (MockedStatic<UserMapper> mockedMapper = mockStatic(UserMapper.class)) {
+            when(usersRepository.findById(anyLong())).thenReturn(Optional.of(users));
+            mockedMapper.when(() -> UserMapper.toResponse(any())).thenReturn(userResponseTest);
 
-        assertNotNull(result);
-        assertEquals(String.valueOf(id), result.getId());
-        assertEquals(TEST_USERNAME, result.getUsername());
-        assertEquals(TEST_EMAIL, result.getEmail());
-        assertEquals(TEST_NAME, result.getName());
-        assertEquals(TEST_LASTNAME, result.getLastName());
-        assertEquals(TEST_PASSWORD, result.getPassword());
-        assertEquals(TEST_STATUS, result.getStatus().getValue());
-        assertEquals(TEST_STATUS, result.getStatus().getValue());
-        assertEquals(users.getCreatedAt().atOffset(ZoneOffset.UTC), result.getCreatedAt());
+            UserResponse result = usersService.getUserById(String.valueOf(id));
+
+            assertNotNull(result);
+            assertEquals(String.valueOf(id), result.getId());
+            assertEquals(TEST_USERNAME, result.getUsername());
+            assertEquals(TEST_EMAIL, result.getEmail());
+            assertEquals(TEST_NAME, result.getName());
+            assertEquals(TEST_LASTNAME, result.getLastName());
+            assertEquals(TEST_PASSWORD, result.getPassword());
+            assertEquals(TEST_STATUS, result.getStatus().getValue());
+            assertEquals(TEST_STATUS, result.getStatus().getValue());
+            assertEquals(users.getCreatedAt().atOffset(ZoneOffset.UTC), result.getCreatedAt());
+        }
     }
 
     @Test
     public void getInactiveUserByIdTest(){
 
-        Users users = getUsers(id);
-        users.setStatus(false);
-        users.setUpdatedAt(Instant.now());
+        Users inactiveUserEntity = getUsers(id);
+        inactiveUserEntity.setStatus(false);
+        inactiveUserEntity.setUpdatedAt(Instant.now());
 
-        when(usersRepository.findById(anyLong())).thenReturn(Optional.of(users));
+        UserResponse userResponseTest = getUserResponse(inactiveUserEntity.getId());
+        userResponseTest.status(UserStatus.INACTIVE);
+        userResponseTest.createdAt(OffsetDateTime.ofInstant(inactiveUserEntity.getCreatedAt(), ZoneOffset.UTC));
 
-        UserResponse result = usersService.getUserById(String.valueOf(id));
+        try (MockedStatic<UserMapper> mockedMapper = mockStatic(UserMapper.class)) {
+            when(usersRepository.findById(anyLong())).thenReturn(Optional.of(inactiveUserEntity));
+            mockedMapper.when(() -> UserMapper.toResponse(any())).thenReturn(userResponseTest);
 
-        assertNotNull(result);
-        assertEquals(String.valueOf(id), result.getId());
-        assertEquals(TEST_USERNAME, result.getUsername());
-        assertEquals(TEST_EMAIL, result.getEmail());
-        assertEquals(TEST_NAME, result.getName());
-        assertEquals(TEST_LASTNAME, result.getLastName());
-        assertEquals(TEST_PASSWORD, result.getPassword());
-        assertEquals(TEST_STATUS_2, result.getStatus().getValue());
-        assertEquals(users.getCreatedAt().atOffset(ZoneOffset.UTC), result.getCreatedAt());
+            UserResponse result = usersService.getUserById(String.valueOf(id));
+
+            assertNotNull(result);
+            assertEquals(String.valueOf(id), result.getId());
+            assertEquals(TEST_USERNAME, result.getUsername());
+            assertEquals(TEST_EMAIL, result.getEmail());
+            assertEquals(TEST_NAME, result.getName());
+            assertEquals(TEST_LASTNAME, result.getLastName());
+            assertEquals(TEST_PASSWORD, result.getPassword());
+            assertEquals(TEST_STATUS_2, result.getStatus().getValue());
+            assertEquals(inactiveUserEntity.getCreatedAt().atOffset(ZoneOffset.UTC), result.getCreatedAt());
+        }
     }
 
     @Test
@@ -259,23 +310,38 @@ public class UsersServiceTest extends UserTest {
         updatedUser.setCreatedAt(users.getCreatedAt());
         updatedUser.setUpdatedAt(Instant.now());
 
-        when(usersRepository.findById(anyLong())).thenReturn(Optional.of(users));
-        when(usersRepository.findByUsername(anyString())).thenReturn(new ArrayList<>());
-        when(usersRepository.findByEmail(anyString())).thenReturn(new ArrayList<>());
-        when(usersRepository.save(any())).thenReturn(updatedUser);
+        UserResponse userResponseTest = new UserResponse()
+                .id(users.getId().toString())
+                .username(TEST_USERNAME_2)
+                .email(TEST_EMAIL_2)
+                .name(TEST_NAME_2)
+                .lastName(TEST_LASTNAME_2)
+                .password(TEST_PASSWORD_2)
+                .status(UserStatus.INACTIVE)
+                .createdAt(OffsetDateTime.ofInstant(users.getCreatedAt(), ZoneOffset.UTC))
+                .updatedAt(OffsetDateTime.ofInstant(updatedUser.getUpdatedAt(), ZoneOffset.UTC));
 
-        UserResponse result =  usersService.updateUser(users.getId().toString(), sampleUserRequest);
+        try (MockedStatic<UserMapper> mockedMapper = mockStatic(UserMapper.class)) {
+            mockedMapper.when(() -> UserMapper.toEntity(any())).thenReturn(users);
+            when(usersRepository.findById(anyLong())).thenReturn(Optional.of(users));
+            when(usersRepository.findByUsername(anyString())).thenReturn(new ArrayList<>());
+            when(usersRepository.findByEmail(anyString())).thenReturn(new ArrayList<>());
+            when(usersRepository.save(any())).thenReturn(updatedUser);
+            mockedMapper.when(() -> UserMapper.toResponse(any())).thenReturn(userResponseTest);
 
-        assertNotNull(result);
-        assertEquals(users.getId().toString(), result.getId());
-        assertEquals(TEST_NAME_2, result.getName());
-        assertEquals(TEST_USERNAME_2, result.getUsername());
-        assertEquals(TEST_LASTNAME_2, result.getLastName());
-        assertEquals(TEST_EMAIL_2, result.getEmail());
-        assertEquals(TEST_PASSWORD_2, result.getPassword());
-        assertEquals(TEST_STATUS_2, result.getStatus().getValue());
-        assertEquals(users.getCreatedAt().atOffset(ZoneOffset.UTC), result.getCreatedAt());
-        assertNotNull(result.getUpdatedAt());
+            UserResponse result = usersService.updateUser(users.getId().toString(), sampleUserRequest);
+
+            assertNotNull(result);
+            assertEquals(users.getId().toString(), result.getId());
+            assertEquals(TEST_NAME_2, result.getName());
+            assertEquals(TEST_USERNAME_2, result.getUsername());
+            assertEquals(TEST_LASTNAME_2, result.getLastName());
+            assertEquals(TEST_EMAIL_2, result.getEmail());
+            assertEquals(TEST_PASSWORD_2, result.getPassword());
+            assertEquals(TEST_STATUS_2, result.getStatus().getValue());
+            assertEquals(users.getCreatedAt().atOffset(ZoneOffset.UTC), result.getCreatedAt());
+            assertNotNull(result.getUpdatedAt());
+        }
     }
 
     @Test
@@ -292,15 +358,30 @@ public class UsersServiceTest extends UserTest {
         updatedUser.setCreatedAt(users.getCreatedAt());
         updatedUser.setUpdatedAt(Instant.now());
 
-        when(usersRepository.findById(anyLong())).thenReturn(Optional.of(users));
-        when(usersRepository.findByUsername(anyString())).thenReturn(new ArrayList<>());
-        when(usersRepository.findByEmail(anyString())).thenReturn(new ArrayList<>());
-        when(usersRepository.save(any())).thenReturn(updatedUser);
+        UserResponse userResponseTest = new UserResponse()
+                .id(users.getId().toString())
+                .username(TEST_USERNAME_2)
+                .email(TEST_EMAIL_2)
+                .name(TEST_NAME_2)
+                .lastName(TEST_LASTNAME_2)
+                .password(TEST_PASSWORD_2)
+                .status(UserStatus.ACTIVE)
+                .createdAt(OffsetDateTime.ofInstant(users.getCreatedAt(), ZoneOffset.UTC))
+                .updatedAt(OffsetDateTime.ofInstant(updatedUser.getUpdatedAt(), ZoneOffset.UTC));
 
-        UserResponse result =  usersService.updateUser(users.getId().toString(), sampleUserRequest);
+        try (MockedStatic<UserMapper> mockedMapper = mockStatic(UserMapper.class)) {
+            mockedMapper.when(() -> UserMapper.toEntity(any())).thenReturn(users);
+            when(usersRepository.findById(anyLong())).thenReturn(Optional.of(users));
+            when(usersRepository.findByUsername(anyString())).thenReturn(new ArrayList<>());
+            when(usersRepository.findByEmail(anyString())).thenReturn(new ArrayList<>());
+            when(usersRepository.save(any())).thenReturn(updatedUser);
+            mockedMapper.when(() -> UserMapper.toResponse(any())).thenReturn(userResponseTest);
 
-        assertNotNull(result);
-        assertEquals(TEST_STATUS, result.getStatus().getValue());
+            UserResponse result = usersService.updateUser(users.getId().toString(), sampleUserRequest);
+
+            assertNotNull(result);
+            assertEquals(TEST_STATUS, result.getStatus().getValue());
+        }
     }
 
     @Test
