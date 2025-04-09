@@ -16,7 +16,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.ResultActions;
 
 import java.time.OffsetDateTime;
 import java.util.Collections;
@@ -79,7 +78,9 @@ public class UsersControllerTest extends UserTest {
                 .andExpect(content().json(objectMapper.writeValueAsString(userResponse)))
                 .andExpect(jsonPath("$.id").value(ID))
                 .andExpect(jsonPath("$.username").value(TEST_USERNAME))
-                .andExpect(jsonPath("$.status").value("ACTIVE"));
+                .andExpect(jsonPath("$.status").value("ACTIVE"))
+                .andExpect(jsonPath("$.createdAt").exists())
+                .andExpect(jsonPath("$.updatedAt").doesNotExist());
 
         verify(usersService, times(1)).createUser(userRequest);
     }
@@ -153,7 +154,9 @@ public class UsersControllerTest extends UserTest {
                 .andExpect(content().json(objectMapper.writeValueAsString(userResponse)))
                 .andExpect(jsonPath("$.id").value(ID))
                 .andExpect(jsonPath("$.username").value(TEST_USERNAME))
-                .andExpect(jsonPath("$.status").value("ACTIVE"));
+                .andExpect(jsonPath("$.status").value("ACTIVE"))
+                .andExpect(jsonPath("$.createdAt").exists())
+                .andExpect(jsonPath("$.updatedAt").doesNotExist());
 
         verify(usersService, times(1)).getUserById(userResponse.getId());
     }
@@ -172,6 +175,8 @@ public class UsersControllerTest extends UserTest {
     @Test
     public void updateUserTest() throws Exception {
 
+        userResponse.updatedAt(OffsetDateTime.now());
+
         when(usersService.updateUser(any(), any())).thenReturn(userResponse);
 
         mockMvc.perform(put("/users/{id}", userResponse.getId())
@@ -181,7 +186,9 @@ public class UsersControllerTest extends UserTest {
                 .andExpect(content().json(objectMapper.writeValueAsString(userResponse)))
                 .andExpect(jsonPath("$.id").value(ID))
                 .andExpect(jsonPath("$.username").value(TEST_USERNAME))
-                .andExpect(jsonPath("$.status").value("ACTIVE"));
+                .andExpect(jsonPath("$.status").value("ACTIVE"))
+                .andExpect(jsonPath("$.createdAt").exists())
+                .andExpect(jsonPath("$.updatedAt").exists());
 
         verify(usersService, times(1)).updateUser(userResponse.getId(), userRequest);
     }
