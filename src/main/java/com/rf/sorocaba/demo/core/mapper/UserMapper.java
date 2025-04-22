@@ -5,10 +5,6 @@ import com.rf.sorocaba.demo.core.model.UserRequest;
 import com.rf.sorocaba.demo.core.model.UserResponse;
 import com.rf.sorocaba.demo.core.model.UserStatus;
 
-import java.time.Instant;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-
 public class UserMapper {
 
     public static Users toEntity(UserRequest request) {
@@ -20,10 +16,8 @@ public class UserMapper {
         user.setLastName(request.getLastName());
         user.setEmail(request.getEmail());
         user.setPassword(request.getPassword());
-
         user.setStatus(request.getStatus() == UserStatus.ACTIVE);
-        user.setCreatedAt(Instant.now());
-        user.setUpdatedAt(Instant.now());
+
 
         return user;
     }
@@ -45,10 +39,10 @@ public class UserMapper {
         response.setStatus(user.getStatus() ? UserStatus.ACTIVE : UserStatus.INACTIVE);
 
         if (user.getCreatedAt() != null)
-            response.setCreatedAt(OffsetDateTime.ofInstant(user.getCreatedAt(), ZoneOffset.UTC));
+            response.setCreatedAt(user.getCreatedAt());
 
         if (user.getUpdatedAt() != null)
-            response.setUpdatedAt(OffsetDateTime.ofInstant(user.getUpdatedAt(), ZoneOffset.UTC));
+            response.setUpdatedAt(user.getUpdatedAt());
 
         return response;
     }

@@ -8,7 +8,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.SequenceGenerator;
 
-import java.time.Instant;
+import java.time.OffsetDateTime;
 
 
 @Entity(name = "users")
@@ -39,11 +39,11 @@ public class Users {
     @Column(name = "status")
     private Boolean status;
 
-    @Column(name = "createdAt", nullable = false)
-    private Instant createdAt;
+    @Column(name = "createdAt", nullable = false, updatable = false)
+    private OffsetDateTime createdAt;
 
     @Column(name = "updatedAt")
-    private Instant updatedAt;
+    private OffsetDateTime  updatedAt;
 
     public Long getId() {
         return id;
@@ -101,19 +101,19 @@ public class Users {
         this.status = status;
     }
 
-    public Instant getCreatedAt() {
+    public OffsetDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(Instant createdAt) {
+    public void setCreatedAt(OffsetDateTime createdAt) {
         this.createdAt = createdAt;
     }
 
-    public Instant getUpdatedAt() {
+    public OffsetDateTime getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setUpdatedAt(Instant updatedAt) {
+    public void setUpdatedAt(OffsetDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
 }

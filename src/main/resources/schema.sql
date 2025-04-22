@@ -1,6 +1,3 @@
--- Users
---DROP TABLE IF EXISTS users;
-
 CREATE TABLE IF NOT EXISTS users(
     id serial primary key,
     username varchar(100) not null,
@@ -9,6 +6,6 @@ CREATE TABLE IF NOT EXISTS users(
     email varchar(255) not null,
     password varchar(255) not null,
     status smallint DEFAULT 1,
-    createdAt timestamp not null,
+    createdAt timestamp default NOW() not null,
     updatedAt timestamp
 );

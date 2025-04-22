@@ -6,6 +6,7 @@ import com.rf.sorocaba.demo.core.model.UserResponse;
 import com.rf.sorocaba.demo.core.model.UserStatus;
 
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,7 +51,7 @@ public abstract class UserTest {
         users.setLastName(TEST_LASTNAME);
         users.setPassword(TEST_PASSWORD);
         users.setStatus(true);
-        users.setCreatedAt(Instant.now());
+        users.setCreatedAt(OffsetDateTime.now());
         return users;
     }
 
@@ -78,8 +79,8 @@ public abstract class UserTest {
         users.setLastName(TEST_LASTNAME_2);
         users.setPassword(TEST_PASSWORD_2);
         users.setStatus(false);
-        users.setCreatedAt(Instant.now());
-        users.setUpdatedAt(Instant.now());
+        users.setCreatedAt(OffsetDateTime.now());
+        users.setUpdatedAt(OffsetDateTime.now());
 
         usersList.add(getUsers(1L));
         usersList.add(users);
