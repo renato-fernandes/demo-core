@@ -1,22 +1,25 @@
 package com.rf.sorocaba.demo.core.service;
 
 import com.rf.sorocaba.demo.core.entity.Users;
+import com.rf.sorocaba.demo.core.mapper.UserMapper;
 import com.rf.sorocaba.demo.core.model.UserRequest;
 import com.rf.sorocaba.demo.core.model.UserResponse;
-import com.rf.sorocaba.demo.core.model.UserStatus;
 import com.rf.sorocaba.demo.core.repository.UsersRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
-import java.time.ZoneOffset;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 @Service
 public class UsersService {
+
+    private static final Logger log = LoggerFactory.getLogger(UsersService.class);
 
     private final UsersRepository usersRepository;
 
@@ -29,37 +32,27 @@ public class UsersService {
         UserResponse user = null;
         if(Objects.nonNull(userRequest) && otherEqualUserDoesNotExists(userRequest)){
 
-            Users users = new Users();
-            users.setUsername(userRequest.getUsername());
-            users.setEmail(userRequest.getEmail());
-            users.setName(userRequest.getName());
-            users.setLastName(userRequest.getLastName());
-            users.setPassword(userRequest.getPassword());
-            users.setStatus(UserStatus.ACTIVE.equals(userRequest.getStatus()));
-            users.setCreatedAt(Instant.now());
+            Users users = UserMapper.toEntity(userRequest);
+            users.setCreatedAt(OffsetDateTime.now());
 
             Users newUsers = null;
             try {
                 newUsers = usersRepository.save(users);
             } catch (DataIntegrityViolationException e) {
-                System.out.println("DataIntegrityViolationException");
+                log.error("[UsersService] DataIntegrityViolationException - " +
+                        "invalid User object: verify if object UserRequest has all non-null parameters and if it is valid");
                 return null;
             }
-
-            user = new UserResponse()
-                    .id(String.valueOf(newUsers.getId()))
-                    .username(newUsers.getUsername())
-                    .name(newUsers.getName())
-                    .lastName(newUsers.getLastName())
-                    .email(newUsers.getEmail())
-                    .password(newUsers.getPassword())
-                    .status(newUsers.getStatus() ? UserStatus.ACTIVE : UserStatus.INACTIVE)
-                    .createdAt(newUsers.getCreatedAt().atOffset(ZoneOffset.UTC));
+            log.info("[UsersService] New User created - id: {}, username:{}", newUsers.getId(), newUsers.getUsername());
+            user = UserMapper.toResponse(newUsers);
         }
         return user;
     }
 
     public UserResponse deleteUser(String id) {
+
+        log.debug("[UsersService] Request to delete user - id: {}", id);
+
         UserResponse userToBeDeleted = getUserById(id);
         usersRepository.deleteById(Long.valueOf(id));
         return Objects.nonNull(userToBeDeleted) ? userToBeDeleted : null;
@@ -68,19 +61,10 @@ public class UsersService {
     public List<UserResponse> getAllUsers() {
         List<Users> usersList = usersRepository.findAll();
 
+        log.debug("[UsersService] List of {} user returned", usersList.size());
+
         return usersList.stream()
-                .map(users -> new UserResponse()
-                        .id(users.getId().toString())
-                        .username(users.getUsername())
-                        .email(users.getEmail())
-                        .name(users.getName())
-                        .lastName(users.getLastName())
-                        .password(users.getPassword())
-                        .status(users.getStatus() ? UserStatus.ACTIVE : UserStatus.INACTIVE)
-                        .createdAt(users.getCreatedAt().atOffset(ZoneOffset.UTC))
-                        .updatedAt(Objects.nonNull(users.getUpdatedAt()) ?
-                                users.getUpdatedAt().atOffset(ZoneOffset.UTC) :
-                                null))
+                .map(UserMapper::toResponse)
                 .toList();
     }
 
@@ -92,20 +76,9 @@ public class UsersService {
         Users users = null;
         if(usersOptional.isPresent()){
             users =usersOptional.get();
+            log.debug("[UsersService] User data requested - id:{}, username:{}", users.getId(), users.getUsername());
         }
-        return Objects.nonNull(users) ? new UserResponse()
-                .id(users.getId().toString())
-                .username(users.getUsername())
-                .email(users.getEmail())
-                .name(users.getName())
-                .lastName(users.getLastName())
-                .password(users.getPassword())
-                .status(users.getStatus() ? UserStatus.ACTIVE : UserStatus.INACTIVE)
-                .createdAt(users.getCreatedAt().atOffset(ZoneOffset.UTC))
-                .updatedAt(Objects.nonNull(users.getUpdatedAt()) ?
-                        users.getUpdatedAt().atOffset(ZoneOffset.UTC) :
-                        null) :
-                null;
+        return Objects.nonNull(users) ? UserMapper.toResponse(users) : null;
     }
 
     public UserResponse updateUser(String id, UserRequest userRequest) {
@@ -116,30 +89,17 @@ public class UsersService {
         if(userToBeUpdated.isPresent()){
             if(Objects.nonNull(userRequest) && otherEqualUserDoesNotExists(Long.valueOf(id), userRequest)){
 
-                Users users = new Users();
+                Users users = UserMapper.toEntity(userRequest);
                 users.setId(Long.valueOf(id));
-                users.setUsername(userRequest.getUsername());
-                users.setEmail(userRequest.getEmail());
-                users.setName(userRequest.getName());
-                users.setLastName(userRequest.getLastName());
-                users.setPassword(userRequest.getPassword());
-                users.setStatus(UserStatus.ACTIVE.equals(userRequest.getStatus()));
                 users.setCreatedAt(userToBeUpdated.get().getCreatedAt());
-                users.setUpdatedAt(Instant.now());
+                users.setUpdatedAt(OffsetDateTime.now());
 
                 Users updatedUserEntity = usersRepository.save(users);
+                log.info("[UsersService] User updated! - id:{}", id);
 
-                updatedUser = new UserResponse()
-                        .id(String.valueOf(updatedUserEntity.getId()))
-                        .username(updatedUserEntity.getUsername())
-                        .name(updatedUserEntity.getName())
-                        .lastName(updatedUserEntity.getLastName())
-                        .email(updatedUserEntity.getEmail())
-                        .password(updatedUserEntity.getPassword())
-                        .status(updatedUserEntity.getStatus() ? UserStatus.ACTIVE : UserStatus.INACTIVE)
-                        .createdAt(updatedUserEntity.getCreatedAt().atOffset(ZoneOffset.UTC))
-                        .updatedAt(updatedUserEntity.getCreatedAt().atOffset(ZoneOffset.UTC));
+                updatedUser = UserMapper.toResponse(updatedUserEntity);
             }else{
+                log.warn("[UsersService] Updating User failed! - id:{}", id);
                 updatedUser = new UserResponse();
             }
         }

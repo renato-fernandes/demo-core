@@ -2,9 +2,11 @@ package com.rf.sorocaba.demo.core;
 
 import com.rf.sorocaba.demo.core.entity.Users;
 import com.rf.sorocaba.demo.core.model.UserRequest;
+import com.rf.sorocaba.demo.core.model.UserResponse;
 import com.rf.sorocaba.demo.core.model.UserStatus;
 
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,8 +51,22 @@ public abstract class UserTest {
         users.setLastName(TEST_LASTNAME);
         users.setPassword(TEST_PASSWORD);
         users.setStatus(true);
-        users.setCreatedAt(Instant.now());
+        users.setCreatedAt(OffsetDateTime.now());
         return users;
+    }
+
+    protected UserResponse getUserResponse(Long id){
+
+        UserResponse response = new UserResponse();
+
+        response.setId(id.toString());
+        response.setUsername(TEST_USERNAME);
+        response.setName(TEST_NAME);
+        response.setLastName(TEST_LASTNAME);
+        response.setEmail(TEST_EMAIL);
+        response.setPassword(TEST_PASSWORD);
+
+        return response;
     }
 
     protected List<Users> getUsersList(){
@@ -63,8 +79,8 @@ public abstract class UserTest {
         users.setLastName(TEST_LASTNAME_2);
         users.setPassword(TEST_PASSWORD_2);
         users.setStatus(false);
-        users.setCreatedAt(Instant.now());
-        users.setUpdatedAt(Instant.now());
+        users.setCreatedAt(OffsetDateTime.now());
+        users.setUpdatedAt(OffsetDateTime.now());
 
         usersList.add(getUsers(1L));
         usersList.add(users);
