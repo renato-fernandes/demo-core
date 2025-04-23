@@ -25,25 +25,15 @@ public class UserMapper {
     public static UserResponse toResponse(Users user) {
         if (user == null) return null;
 
-        UserResponse response = new UserResponse();
-
-        if (user.getId() != null)
-            response.setId(user.getId().toString());
-
-        response.setUsername(user.getUsername());
-        response.setName(user.getName());
-        response.setLastName(user.getLastName());
-        response.setEmail(user.getEmail());
-        response.setPassword(user.getPassword());
-
-        response.setStatus(user.getStatus() ? UserStatus.ACTIVE : UserStatus.INACTIVE);
-
-        if (user.getCreatedAt() != null)
-            response.setCreatedAt(user.getCreatedAt());
-
-        if (user.getUpdatedAt() != null)
-            response.setUpdatedAt(user.getUpdatedAt());
-
-        return response;
+        return new UserResponse()
+                .id(user.getId() != null ? user.getId().toString() : null)
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .name(user.getName())
+                .lastName(user.getLastName())
+                .password(user.getPassword())
+                .status(user.getStatus() != null ? (user.getStatus() ? UserStatus.ACTIVE : UserStatus.INACTIVE) : null)
+                .createdAt(user.getCreatedAt() != null ? user.getCreatedAt() : null)
+                .updatedAt(user.getUpdatedAt() != null ? user.getUpdatedAt() : null);
     }
 }
