@@ -1,11 +1,11 @@
 spring:
   application:
-    name: @project.name@
+    name: '@project.name@'
   datasource:
     url: jdbc:postgresql://localhost:5432/demo-core-db
     driver-class-name: org.postgresql.Driver
     username: postgres
-    password: 123
+    password: ENC(JRd18pSSKFPnAqIZ8ds/t2/UnEQHahePzLYSjCyTe2FX6Cu1OyM0U/MDiqCWvKcr)
   sql:
     init:
       mode: always
@@ -20,6 +20,10 @@ spring:
     open-in-view: false
 
 logging:
-  config: classpath:logback-spring.xml
+  config: src\main\resources\logback-spring.xml
   level:
-    root: DEBUG
+    root: INFO #DEBUG #
+
+jasypt:
+  encryptor:
+    password: secretKey

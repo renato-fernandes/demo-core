@@ -7,6 +7,7 @@ import com.rf.sorocaba.demo.core.model.UserRequest;
 import com.rf.sorocaba.demo.core.model.UserResponse;
 import com.rf.sorocaba.demo.core.model.UserStatus;
 import com.rf.sorocaba.demo.core.repository.UsersRepository;
+import com.rf.sorocaba.demo.core.utils.EncryptDecryptUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -43,6 +44,9 @@ public class UsersServiceTest extends UserTest {
 
     @Mock
     private UsersRepository usersRepository;
+
+    @Mock
+    private EncryptDecryptUtils encryptDecryptUtils;
 
     private UserRequest sampleUserRequest;
     private final long id = 1L;
