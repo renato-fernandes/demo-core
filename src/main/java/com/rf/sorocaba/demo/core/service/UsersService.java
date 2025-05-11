@@ -5,6 +5,7 @@ import com.rf.sorocaba.demo.core.mapper.UserMapper;
 import com.rf.sorocaba.demo.core.model.UserRequest;
 import com.rf.sorocaba.demo.core.model.UserResponse;
 import com.rf.sorocaba.demo.core.repository.UsersRepository;
+import com.rf.sorocaba.demo.core.utils.EncryptDecryptUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,15 +23,19 @@ public class UsersService {
     private static final Logger log = LoggerFactory.getLogger(UsersService.class);
 
     private final UsersRepository usersRepository;
+    private final EncryptDecryptUtils encryptDecryptUtils;
 
     @Autowired
-    public UsersService(UsersRepository usersRepository) {
+    public UsersService(UsersRepository usersRepository, EncryptDecryptUtils encryptDecryptUtils) {
         this.usersRepository = usersRepository;
+        this.encryptDecryptUtils = encryptDecryptUtils;
     }
 
     public UserResponse createUser(UserRequest userRequest) {
         UserResponse user = null;
         if(Objects.nonNull(userRequest) && otherEqualUserDoesNotExists(userRequest)){
+
+            encryptPassword(userRequest, null);
 
             Users users = UserMapper.toEntity(userRequest);
             users.setCreatedAt(OffsetDateTime.now());
@@ -89,6 +94,8 @@ public class UsersService {
         if(userToBeUpdated.isPresent()){
             if(Objects.nonNull(userRequest) && otherEqualUserDoesNotExists(Long.valueOf(id), userRequest)){
 
+                encryptPassword(userRequest, userToBeUpdated.get().getPassword());
+
                 Users users = UserMapper.toEntity(userRequest);
                 users.setId(Long.valueOf(id));
                 users.setCreatedAt(userToBeUpdated.get().getCreatedAt());
@@ -118,5 +125,20 @@ public class UsersService {
         List<Users> usernameList = usersRepository.findByUsername(userRequest.getUsername());
         List<Users> emailList = usersRepository.findByEmail(userRequest.getEmail());
         return usernameList.isEmpty() && emailList.isEmpty();
+    }
+
+    private void encryptPassword(UserRequest userRequest, String currentPass){
+        if(Objects.nonNull(userRequest.getPassword()) &&
+                isNewPassword(userRequest.getPassword(), currentPass)){
+            userRequest.setPassword(encryptDecryptUtils.encrypt(userRequest.getPassword()));
+        }
+    }
+
+    private boolean isNewPassword(String password, String currentEncryptedPassword) {
+        String decryptedPass = null;
+        if(Objects.nonNull(currentEncryptedPassword)){
+            decryptedPass = encryptDecryptUtils.decrypt(currentEncryptedPassword);
+        }
+        return !password.equals(decryptedPass);
     }
 }
